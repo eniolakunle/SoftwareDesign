@@ -9,6 +9,8 @@ class Application(tk.Frame):
 
         self.database = db.Database()
         self.current_user = None
+        self.newlinks = []
+        self.urls = {}
 
         # Control Variables
         self.ctrl_username = tk.StringVar()
@@ -124,20 +126,23 @@ class Application(tk.Frame):
         self.label_blackboard.bind('<Button-1>', lambda event, link=self.label_blackboard: self.open_link(link))
         self.label_econnection.bind('<Button-1>', lambda event, link=self.label_econnection: self.open_link(link))
 
+
         self.grid(sticky=tk.NSEW)
         self.make_frame1()
 
     def open_link(self, link):
         if link is self.label_google:
             webbrowser.open_new(r'google.com')
-        if link is self.label_facebook:
+        elif link is self.label_facebook:
             webbrowser.open_new(r'facebook.com')
-        if link is self.label_amazon:
+        elif link is self.label_amazon:
             webbrowser.open_new(r'smile.amazon.com')
-        if link is self.label_blackboard:
+        elif link is self.label_blackboard:
             webbrowser.open_new(r'blackboard.com')
-        if link is self.label_econnection:
+        elif link is self.label_econnection:
             webbrowser.open_new(r'career.egr.uh.edu/students/econnection')
+        else:
+            webbrowser.open_new(self.urls.get(link))
 
     def on_click(self, button):
         if button is self.button_login:
@@ -268,6 +273,7 @@ class Application(tk.Frame):
 
     def make_frame2(self):
         self.frame2.grid(sticky=tk.NSEW)
+
         if self.database.verify_permission(self.current_user, 'add_remove_user'):
             self.button_add_user.grid(column=0, row=0)
             self.button_remove_user.grid(column=1, row=0)
@@ -288,6 +294,29 @@ class Application(tk.Frame):
             self.label_econnection.grid(column=0, row=4)
         else:
             self.label_econnection.grid_forget()
+
+        #for adding new links to frame2
+        for label in self.newlinks:
+            label.grid_forget()
+        self.newlinks.clear()
+        self.urls.clear()
+        i = 5
+        for self.permission in self.database.role_permissions:
+            for self.roles in self.current_user.roles:
+                if self.roles == self.permission:
+                    for self.role in self.database.role_permissions[self.permission]:
+                        if self.role == 'econnection' or self.role == 'blackboard' or self.role == 'add_remove_role' or self.role == 'add_remove_user':
+                            continue
+                        else:
+                            self.label_unknown = tk.Label(self.frame8, text=self.role[:self.role.find('.')].capitalize(), fg='blue', cursor='hand2')
+                            self.newlinks.append(self.label_unknown)     #place label last
+                            self.newlinks[-1].grid(column = 0, row = i) #last label in list
+                            self.urls.update({self.label_unknown:self.role})
+                            i += 1
+
+        for self.labels in self.newlinks: #binding new links to a website
+            self.labels.bind('<Button-1>', lambda event, link=self.labels: self.open_link(link))
+
 
         # Global Links
         self.frame8.grid(column=0, row=2, columnspan=self.frame2.grid_size()[0])
@@ -367,6 +396,8 @@ def main():
     app.master.title('Portal')
     app.database.add_role('admin', ['add_remove_user', 'add_remove_role'])
     ryan = db.User('ryan', '1234', ['admin'])
+    kunle = db.User('kunle', '12345', ['admin'])
+    app.database.add_user(kunle)
     app.database.add_user(ryan)
     app.mainloop()
 
