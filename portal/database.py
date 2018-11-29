@@ -48,6 +48,9 @@ class Database:
     def remove_role(self, role_name):
         if role_name in self.role_permissions:
             del self.role_permissions[role_name]
+            for user in list(self.username_password.keys()):
+                if role_name in self.username_roles[user]:
+                    self.username_roles[user].remove(role_name)
             return 1
         else:
             return 0
